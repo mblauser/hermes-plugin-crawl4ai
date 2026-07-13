@@ -10,6 +10,18 @@ This plugin provides a `crawl4ai` web extract backend for Hermes. It enables ext
 - `searxng` → self-hosted web search
 - `crawl4ai` → self-hosted web extraction (this plugin)
 
+## About crawl4ai
+
+[crawl4ai](https://github.com/unclecode/crawl4ai) is an open-source web crawler and extractor designed for LLM-friendly output. Key points:
+
+- **Self-hosted** — runs on your infrastructure via Docker (`docker pull unclecode/crawl4ai`)
+- **LLM-optimized** — returns clean markdown via the `/md` endpoint, ideal for RAG and agent workflows
+- **JavaScript rendering** — built-in browser handles SPAs and dynamic content
+- **No vendor lock-in** — no API keys to buy, no rate limits, no data leaving your network
+- **Docker Hub:** `unclecode/crawl4ai`
+
+It's the natural counterpart to `searxng`: search locally, extract locally, zero external dependencies.
+
 ## Installation
 
 ```bash
