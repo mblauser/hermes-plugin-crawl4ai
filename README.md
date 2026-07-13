@@ -1,0 +1,70 @@
+# Hermes Crawl4ai Web Extract Plugin
+
+Self-hosted web content extraction plugin for Hermes using [crawl4ai](https://github.com/unclecode/crawl4ai).
+
+## Overview
+
+This plugin provides a `crawl4ai` web extract backend for Hermes. It enables extraction of clean markdown content from any URL, including JavaScript-rendered pages, using your own self-hosted crawl4ai instance.
+
+**Perfect pairing with searxng** for a fully self-hosted search + extract stack:
+- `searxng` → self-hosted web search
+- `crawl4ai` → self-hosted web extraction (this plugin)
+
+## Installation
+
+```bash
+# Clone into your Hermes plugins directory (flat layout)
+git clone https://github.com/mblauser/hermes-plugin-crawl4ai.git ~/.hermes/plugins/crawl4ai
+```
+
+No additional dependencies — uses `httpx` which is already a Hermes core dependency.
+
+## Configuration
+
+Set these environment variables (in `~/.hermes/.env` or your shell profile):
+
+```bash
+# Required: URL of your crawl4ai instance
+export CRAWL4AI_URL=http://localhost:11235
+
+# Optional: JWT API token (if your crawl4ai instance requires auth)
+export CRAWL4AI_API_TOKEN=your-jwt-token
+```
+
+Or configure in `~/.hermes/config.yaml`:
+
+```yaml
+web:
+  extract_backend: crawl4ai
+```
+
+## Usage
+
+Once installed and configured, use it automatically:
+
+```bash
+# Explicit backend
+hermes chat -q "extract https://example.com using crawl4ai"
+
+# Or if set as default backend in config.yaml:
+hermes chat -q "extract https://example.com"
+```
+
+## Requirements
+
+- **crawl4ai instance** — run via Docker:
+  ```bash
+  docker run -d -p 11235:11235 unclecode/crawl4ai
+  ```
+  The API token will be logged on startup.
+
+## How It Works
+
+- Calls crawl4ai's `/md` endpoint for clean markdown extraction
+- Handles JavaScript-rendered pages via crawl4ai's built-in browser
+- Returns normalized document format compatible with Hermes web tools
+- Self-hosted — no third-party API costs, no data leaves your infrastructure
+
+## License
+
+MIT — same as crawl4ai and Hermes.
