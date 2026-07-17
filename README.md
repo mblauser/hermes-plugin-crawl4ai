@@ -43,11 +43,11 @@ export CRAWL4AI_URL=http://localhost:11235
 export CRAWL4AI_API_TOKEN=your-jwt-token
 ```
 
-Or configure in `~/.hermes/config.yaml`:
+Configure in `~/.hermes/config.yaml`:
 
 ```yaml
 web:
-  extract_backend: crawl4ai
+  extract_backend: "crawl4ai"
 ```
 
 ## Usage
