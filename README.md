@@ -68,7 +68,11 @@ web:
 hermes gateway restart
 ```
 
-Plugins are loaded at startup — a restart is required for the plugin to be registered as a valid extract backend.
+Plugins are loaded at startup. A restart is required for the plugin to be registered as a valid extract backend.
+
+## Compatibility
+
+This plugin depends on the plugin-provider load-order fix in Hermes (see PR [#67309](https://github.com/NousResearch/hermes-agent/pull/67309)). On Hermes versions without this fix, the plugin installs and registers correctly but the `crawl4ai` extract backend cannot be selected. The fix is merged into the Hermes main branch; run `hermes update` or upgrade to a release that includes it.
 
 ## Usage
 
