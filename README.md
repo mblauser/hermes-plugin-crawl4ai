@@ -28,8 +28,11 @@ It's the natural counterpart to `searxng`: search locally, extract locally, zero
 # Clone into your Hermes plugins directory (flat layout)
 git clone https://github.com/mblauser/hermes-plugin-crawl4ai.git ~/.hermes/plugins/crawl4ai
 
-# Install Python dependency
-pip install --break-system-packages httpx
+# Install Python dependency (Debian/Ubuntu)
+sudo apt install -y python3-httpx
+
+# Or via pip (other distros)
+# pip install httpx
 ```
 
 Then **enable the plugin** in `~/.hermes/config.yaml`:
