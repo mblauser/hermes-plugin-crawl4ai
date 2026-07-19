@@ -27,9 +27,18 @@ It's the natural counterpart to `searxng`: search locally, extract locally, zero
 ```bash
 # Clone into your Hermes plugins directory (flat layout)
 git clone https://github.com/mblauser/hermes-plugin-crawl4ai.git ~/.hermes/plugins/crawl4ai
+
+# Install Python dependency
+pip install --break-system-packages httpx
 ```
 
-No additional dependencies — uses `httpx` which is already a Hermes core dependency.
+Then **enable the plugin** in `~/.hermes/config.yaml`:
+
+```yaml
+plugins:
+  enabled:
+    - crawl4ai
+```
 
 ## Configuration
 
@@ -49,6 +58,14 @@ Configure in `~/.hermes/config.yaml`:
 web:
   extract_backend: "crawl4ai"
 ```
+
+**Restart the Hermes gateway** after making config changes:
+
+```bash
+hermes gateway restart
+```
+
+Plugins are loaded at startup — a restart is required for the plugin to be registered as a valid extract backend.
 
 ## Usage
 
