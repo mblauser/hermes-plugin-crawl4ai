@@ -112,7 +112,7 @@ Repeat for every profile that needs crawl4ai:
 hermes plugins list | grep crawl4ai
 
 # Live test with web_extract
-hermes -p <name> -z 'extract content from https://altic.dev/fluid'
+hermes -p <name> -z 'extract content from https://example.com'
 ```
 
 If you see "SearXNG is a search-only backend" despite correct config,
