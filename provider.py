@@ -60,7 +60,7 @@ class Crawl4aiWebExtractProvider(WebSearchProvider):
         return "Crawl4ai (self-hosted)"
 
     def is_available(self) -> bool:
-        return bool(_crawl4ai_url())  # Token is optional per README
+        return bool(_crawl4ai_url() and _crawl4ai_token())
 
     def supports_search(self) -> bool:
         return False  # Use SearXNG for search
