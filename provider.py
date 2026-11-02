@@ -1,4 +1,4 @@
-"""Crawl4ai extract provider — self-hosted, Bearer token auth."""
+"""Crawl4ai extract provider — self-hosted, Bearer token auth, via the /crawl endpoint."""
 
 from __future__ import annotations
 
@@ -11,6 +11,21 @@ from agent.web_search_provider import WebSearchProvider
 from tools.url_safety import is_safe_url
 
 logger = logging.getLogger(__name__)
+
+# The same crawl crawl4ai's /md endpoint runs for its default "fit" filter
+# (PruningContentFilterLXML + LXML scraping, cache write-only), sent to /crawl
+# instead because /crawl also returns the target's HTTP status code, which /md drops.
+_CRAWL_CONFIG: Dict[str, Any] = {
+    "type": "CrawlerRunConfig",
+    "params": {
+        "cache_mode": "write_only",
+        "scraping_strategy": {"type": "LXMLWebScrapingStrategy", "params": {}},
+        "markdown_generator": {
+            "type": "DefaultMarkdownGenerator",
+            "params": {"content_filter": {"type": "PruningContentFilterLXML", "params": {}}},
+        },
+    },
+}
 
 
 def _crawl4ai_url() -> str:
@@ -49,7 +64,7 @@ def _crawl4ai_token() -> str:
 
 
 class Crawl4aiWebExtractProvider(WebSearchProvider):
-    """Crawl4ai extraction provider using /md endpoint."""
+    """Crawl4ai extraction provider using the /crawl endpoint (fit-filtered markdown + HTTP status)."""
 
     @property
     def name(self) -> str:
@@ -94,27 +109,12 @@ class Crawl4aiWebExtractProvider(WebSearchProvider):
                 try:
                     logger.info("Crawl4ai extracting: %s", url)
                     response = await client.post(
-                        f"{base_url}/md",
-                        json={"url": url},
+                        f"{base_url}/crawl",
+                        json={"urls": [url], "crawler_config": _CRAWL_CONFIG},
                         headers=headers,
                     )
                     response.raise_for_status()
-                    data = response.json()
-
-                    # Response shape: {"url": "...", "markdown": "...", "success": true}
-                    markdown = data.get("markdown", "")
-                    if isinstance(markdown, dict):
-                        markdown = markdown.get("raw_markdown", "") or markdown.get("markdown", "")
-
-                    title = self._extract_title(markdown, url)
-
-                    results.append({
-                        "url": url,
-                        "title": title,
-                        "content": markdown,
-                        "raw_content": markdown,
-                        "metadata": {},
-                    })
+                    results.append(self._to_result(url, response.json()))
 
                 except httpx.HTTPStatusError as e:
                     logger.warning("Crawl4ai HTTP error for %s: %s", url, e)
@@ -134,6 +134,44 @@ class Crawl4aiWebExtractProvider(WebSearchProvider):
                     })
 
         return results
+
+    def _to_result(self, url: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Turn one /crawl response into a Hermes extract result.
+
+        A page that answered with HTTP 4xx/5xx is an error, not content: crawl4ai
+        reports such crawls as successful and returns the site's error page as
+        markdown. The message uses Hermes' ``HTTP <code> from origin`` form, so
+        Hermes treats it as the page's own answer (no fallback to another backend).
+        """
+        crawled = (data.get("results") or [None])[0]
+        if not isinstance(crawled, dict):
+            return self._error(url, f"Crawl4ai returned no result: {str(data)[:200]}")
+
+        status = crawled.get("status_code")
+        if isinstance(status, int) and status >= 400:
+            return self._error(url, f"HTTP {status} from origin")
+        if not crawled.get("success", False):
+            reason = crawled.get("error_message") or "unknown error"
+            return self._error(url, f"Crawl4ai could not fetch the page: {reason[:200]}")
+
+        md = crawled.get("markdown") or {}
+        if isinstance(md, dict):
+            # The filter can strip a page to nothing; the unfiltered page beats an empty one.
+            markdown = md.get("fit_markdown") or md.get("raw_markdown") or ""
+        else:
+            markdown = str(md)
+        title = (crawled.get("metadata") or {}).get("title") or self._extract_title(markdown, url)
+        return {
+            "url": url,
+            "title": title,
+            "content": markdown,
+            "raw_content": markdown,
+            "metadata": {"status_code": status},
+        }
+
+    @staticmethod
+    def _error(url: str, message: str) -> Dict[str, Any]:
+        return {"url": url, "title": "", "content": "", "error": message}
 
     def _extract_title(self, markdown: str, fallback_url: str) -> str:
         if not markdown:

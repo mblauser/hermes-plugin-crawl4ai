@@ -15,7 +15,7 @@ This plugin provides a `crawl4ai` web extract backend for Hermes. It enables ext
 [crawl4ai](https://github.com/unclecode/crawl4ai) is an open-source web crawler and extractor designed for LLM-friendly output. Key points:
 
 - **Self-hosted** -- runs on your infrastructure via Docker (`docker pull unclecode/crawl4ai`)
-- **LLM-optimized** -- returns clean markdown via the `/md` endpoint, ideal for RAG and agent workflows
+- **LLM-optimized** -- returns clean, filtered markdown, ideal for RAG and agent workflows
 - **JavaScript rendering** -- built-in browser handles SPAs and dynamic content
 - **No vendor lock-in** -- no API keys to buy, no rate limits, no data leaving your network
 - **Docker Hub:** `unclecode/crawl4ai`
@@ -161,7 +161,9 @@ hermes chat -q "extract https://example.com"
 
 ## How It Works
 
-- Calls crawl4ai's `/md` endpoint for clean markdown extraction
+- Calls crawl4ai's `/crawl` endpoint with the same filter `/md` uses by default (`PruningContentFilterLXML`), so you get the same clean markdown plus the page's HTTP status
+- Pages that answer HTTP 4xx/5xx (dead links, server errors) come back as an error (`HTTP 404 from origin`), not as content. Hermes recognizes that form as the page's own answer, so the agent knows the URL is dead instead of reading the site's error page as if it were the article
+- If the filter strips a page to nothing, the unfiltered markdown is returned instead
 - Handles JavaScript-rendered pages via crawl4ai's built-in browser
 - Returns normalized document format compatible with Hermes web tools
 - Self-hosted -- no third-party API costs, no data leaves your infrastructure
